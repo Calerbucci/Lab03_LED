@@ -43,29 +43,44 @@ input en;
 input dir;
 output [15:0] led;
 
-reg[15:0] led=0;
-reg[15:0] next_led=0;
-wire clk_div;
+reg[15:0] led;
+reg[15:0] next_led;
+wire [24:0] clk_div;
 
 clock_divider clkdiv (.clk(clk), .clk_div(clk_div));
+
+initial begin
+     next_led = 16'b1000000000000000;
+end
 
 always@(posedge clk_div) begin
     led = next_led;
 end
 
 always @ (*) begin 
-    if(rst ==1) next_led = 16'b1000000000000000;
-    else begin
+    if(rst ==1) begin
+       next_led = 16'b1000000000000000;
+    end
+    else if(rst == 0) begin
         if(en ==1 && dir ==1) begin
-         if(led == 16'b1000000000000000) next_led = 16'b000000000000001;
-                else  next_led = led << 1;
+         if(led == 16'b1000000000000000) begin
+          next_led = 16'b000000000000001;
+          end
+          else begin
+                 next_led = led << 1;
+          end
         end
         else if(en == 1 && dir ==0) begin
-           if(led == 16'b000000000000001) next_led =  16'b1000000000000000; 
-            else next_led = led>>1;
+           if(led == 16'b000000000000001) begin
+           next_led =  16'b1000000000000000; 
+           end
+           else begin
+            next_led = led>>1;
+           end
         end
-            else if(en ==0) next_led = next_led;
-            
+            else if(en ==0) begin
+            next_led = next_led;
+         end       
     end
 end
 
