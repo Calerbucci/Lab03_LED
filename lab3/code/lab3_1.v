@@ -49,19 +49,19 @@ wire [24:0] clk_div;
 
 clock_divider clkdiv (.clk(clk), .clk_div(clk_div));
 
-initial begin
-     next_led = 16'b1000000000000000;
-end
 
-always@(posedge clk_div) begin
-    led = next_led;
+always@(posedge clk_div, posedge rst) begin
+    if(rst)begin
+        led = 16'b1000000000000000;
+    end
+    else begin
+         led = next_led;
+    end   
 end
 
 always @ (*) begin 
-    if(rst ==1) begin
-       next_led = 16'b1000000000000000;
-    end
-    else if(rst == 0) begin
+    
+    
         if(en ==1 && dir ==1) begin
          if(led == 16'b1000000000000000) begin
           next_led = 16'b000000000000001;
@@ -79,8 +79,7 @@ always @ (*) begin
            end
         end
             else if(en ==0) begin
-            next_led = next_led;
-         end       
+            next_led = led;    
     end
 end
 
