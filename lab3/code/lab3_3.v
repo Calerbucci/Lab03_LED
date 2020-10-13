@@ -49,10 +49,9 @@ reg [15:0] ledM3;
 reg [15:0] led_nextM1A;
 reg [15:0] led_nextM1B;
 reg [15:0] led_nextM3 ;
-reg flag;
-reg dirA, dirB;
-reg flag1 =1;
-reg flag2 =0;
+reg flag, n_flag;
+reg dirA,n_dirA, n_dirB, dirB, dirC, n_dirC;
+
 wire clk_div23;                     
 wire clk_div25;
 wire tmp_clock1, tmp_clock2;
@@ -72,21 +71,26 @@ assign tmp_clock2 = (speed == 0)? clk_div23: clk_div25;
 always @(posedge tmp_clock1, posedge rst) begin
             //Mr3
             if(rst) begin
-                ledM3 = 16'b0000111000000000;
+                ledM3 <= 16'b0000111000000000;
+                dirC <= 0;
             end
             else begin
-                ledM3 = led_nextM3;
+                ledM3 <= led_nextM3;
+                dirC <= n_dirC;
+                
+                
             end
 end
 
 always @(posedge tmp_clock2, posedge rst) begin
             //Mr1A
             if(rst) begin
-                ledM1A = 16'b1000000000000000;
-                dirA =1;
+                ledM1A <= 16'b1000000000000000;
+                dirA <=1;
             end
             else begin
-                ledM1A = led_nextM1A;
+                ledM1A <= led_nextM1A;
+                dirA <= n_dirA;
             end
             
 end
@@ -94,73 +98,85 @@ end
 always @(posedge tmp_clock2, posedge rst) begin
             //Mr1B
              if(rst) begin
-                ledM1B = 16'b0000000000000001;
-                dirB =0;
+                ledM1B <= 16'b0000000000000001;
+                dirB <=0;
             end
             else begin
-                ledM1B = led_nextM1B;
+                ledM1B <= led_nextM1B;
+                  dirB <= n_dirB;
             end
 end
 
 always@(*) begin
-        flag =1;
+       
         led_nextM3 = ledM3;
         led_nextM1A = ledM1A;
         led_nextM1B = ledM1B;
-        
-       if(en ==1 ) begin
-             if(dirA == 0)begin
-      if(ledM1A == 16'b1000000000000000) begin
-            led_nextM1A =  led_nextM1A>> 1;
-            dirA = 1;
+        n_dirC = dirC;
+        n_dirB = dirB;
+        n_dirA = dirA;
+    if(en ==1 ) begin
+      if(dirA == 0)begin
+         if(ledM1A == 16'b1000_0000_0000_0000) begin
+                led_nextM1A =  ledM1A>> 1;
+                n_dirA = 1;
             end
-      else if(ledM1A != 16'b1000000000000000 ) begin
-              led_nextM1A =    led_nextM1A << 1;
-              end
-      end
-  else if(dirA == 1) begin
-      if(ledM1A + ledM3 == 16'b0001111000000000 || ledM1A + ledM3 == 16'b0000111100000000 ||  ledM1A + ledM3 == 16'b00000111100000000 || ledM1A + ledM3 == 16'b000000111100000000  || ledM1A + ledM3 == 16'b000000011110000000 || ledM1A + ledM3 == 16'b000000001111000000) begin
-               led_nextM1A =    led_nextM1A << 1;
-               dirA = 0;
+        else if(ledM1A != 16'b1000000000000000 ) begin
+                 led_nextM1A =  ledM1A << 1;
+                 n_dirA = dirA;
+           end
+     end
+    else if(dirA == 1) begin
+      if(ledM1A + ledM3 == 16'b0001111000000000 ||( ledM1A & ledM3 != 0) || ledM1A + ledM3 == 16'b0000111100000000 ||  ledM1A + ledM3 == 16'b00000111100000000 || ledM1A + ledM3 == 16'b0000001111000000  || ledM1A + ledM3 == 16'b0000000111100000 || ledM1A + ledM3 == 16'b0000000011110000) begin
+               led_nextM1A =    ledM1A << 1;
+               n_dirA = 0;
                end
       else begin
-                 led_nextM1A =   led_nextM1A >> 1;  
+                 led_nextM1A =   ledM1A >> 1;  
+                  n_dirA = dirA;
                  end
        end
-                   if(dirB == 1)begin
-      if(ledM1B == 16'b0000000000000001) begin
-            led_nextM1B =  led_nextM1B<< 1;
-            dirB = 0;
+      if(dirB == 1)begin
+        if(ledM1B == 16'b0000000000000001) begin
+            led_nextM1B =  ledM1B<< 1;
+            n_dirB = 0;
             end
-      else if(ledM1B != 16'b0000000000000001 ) begin
-              led_nextM1B =    led_nextM1B >> 1;
+        else if(ledM1B != 16'b0000000000000001 ) begin
+              led_nextM1B = ledM1B >> 1;
+               n_dirB = dirB;
               end
       end
-else if(dirA == 0) begin
-      if(ledM1B + ledM3 == 16'b0000000001111000 || ledM1B + ledM3 == 16'b0000111100000000 ||  ledM1B + ledM3 == 16'b00000111100000000 || ledM1B + ledM3 == 16'b000000111100000000  || ledM1B + ledM3 == 16'b000000011110000000 || ledM1B + ledM3 == 16'b000000001111000000) begin
-               led_nextM1B =    led_nextM1B >> 1;
-               dirB = 1;
+     else if(dirB == 0) begin
+      if(ledM1B + ledM3 == 16'b0000000001111000 || (ledM1B & ledM3 !=0) || ledM1B + ledM3 == 16'b0000111100000000 ||  ledM1B + ledM3 == 16'b0000011110000000 || ledM1B + ledM3 == 16'b0000001111000000  || ledM1B + ledM3 == 16'b0000000111100000 || ledM1B + ledM3 == 16'b0000000011110000) begin
+               led_nextM1B =    ledM1B >> 1;
+               n_dirB = 1;
                end
       else begin
-                 led_nextM1B =   led_nextM1B << 1;  
+                 led_nextM1B =   ledM1B << 1;  
+                 n_dirB = dirB;
                  end
             end
-             if(flag == 0)begin
+           if(dirC == 0)begin
             if(ledM3 == 16'b0000111000000000) begin
-                 led_nextM3 =  led_nextM3 >> 1;
-                flag = 1;
+                 led_nextM3 =  ledM3 >> 1;
+                 n_dirC =1;
             end
-            else if(ledM3 != 16'b00001110000000) begin
-                 led_nextM3 =  led_nextM3 << 1;
+            else if(ledM3 != 16'b0000111000000000) begin
+                 led_nextM3 =  ledM3 << 1;
+                 n_dirC = dirC;
+                 
+                
             end
         end
-       else if(flag == 1)begin
+       else if(dirC == 1)begin
             if(ledM3 == 16'b0000000001110000) begin
-                 led_nextM3 =  led_nextM3 << 1;
-                flag = 0;
+                 led_nextM3 =  ledM3 << 1;
+                n_dirC = 0;
             end
-        else if(ledM3 != 16'b00000001110000) begin
-              led_nextM3 =  led_nextM3 >> 1;
+        else if(ledM3 != 16'b0000000001110000) begin
+              led_nextM3 =  ledM3 >> 1;
+              n_dirC = dirC;
+              
          end
         end
 
